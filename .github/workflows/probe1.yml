@@ -1,0 +1,21 @@
+name: probe1
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  p:
+    runs-on: [self-hosted]
+    timeout-minutes: 8
+    steps:
+      - name: probe
+        run: |
+          echo "HOST=$(hostname)"
+          id || true
+          echo "--- ls home ---"
+          ls -la ~ 2>/dev/null | head -20
+          echo "--- tcp ---"
+          for hp in 10.102.4.148:22 10.68.0.5:443; do
+            h=${hp%:*}; p=${hp#*:}
+            (timeout 6 bash -c "exec 3<>/dev/tcp/$h/$p" && echo "OPEN_$hp") || echo "CLOSED_$hp"
+          done
+          echo DONE_PROBE
